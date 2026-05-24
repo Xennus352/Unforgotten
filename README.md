@@ -8,21 +8,21 @@ Designed with a sleek, romantic aesthetic utilizing a Pink & Violet color palett
 
 ## 🚀 Key Features
 
-*   Offline-First Architecture: Complete local-first functionality. Data loads instantly and seamlessly queues changes when network connectivity is lost.
-*   Dual-Purpose Dashboard: 
-    *   *Her Space:* A private, secure monthly cycle and period tracker.
-    *   *Our Space:* A shared anniversary and milestone countdown tracker.
-*   Real-Time Synchronization: Seamless, secure data syncing across both partners' devices.
-*   Extensible Design: Built with a modular database schema to easily support future features (e.g., shared wishlists, daily mood tracking, photo memories).
+- Offline-First Architecture: Complete local-first functionality. Data loads instantly and seamlessly queues changes when network connectivity is lost.
+- Dual-Purpose Dashboard:
+  - _Her Space:_ A private, secure monthly cycle and period tracker.
+  - _Our Space:_ A shared anniversary and milestone countdown tracker.
+- Real-Time Synchronization: Seamless, secure data syncing across both partners' devices.
+- Extensible Design: Built with a modular database schema to easily support future features (e.g., shared wishlists, daily mood tracking, photo memories).
 
 ---
 
 ## 🛠 Tech Stack
 
-*   Frontend: React Native (Expo / Bare Workflow)
-*   Styling: Tailwind CSS (via NativeWind)
-*   Local Database: SQLite (for instantaneous offline reads/writes)
-*   Backend & Sync Engine: Supabase (PostgreSQL, Realtime Sync, and Auth)
+- Frontend: React Native (Expo / Bare Workflow)
+- Styling: Tailwind CSS (via NativeWind)
+- Local Database: SQLite (for instantaneous offline reads/writes)
+- Backend & Sync Engine: Supabase (PostgreSQL, Realtime Sync, and Auth)
 
 ---
 
@@ -30,16 +30,17 @@ Designed with a sleek, romantic aesthetic utilizing a Pink & Violet color palett
 
 The user interface leverages a premium, calming, and romantic palette optimized for a dark/light hybrid theme:
 
-| Component / Use Case | Color Role | Tailwind Color | Hex Code |
-| :--- | :--- | :--- | :--- |
-| Main UI & Backgrounds | Deep Violet (Calm & Trust) | violet-950 | #4c1d95 |
-| Primary Actions / Cycle Logs | Vibrant Pink (Intimacy & Energy) | berry-500 | #f43f5e |
-| Anniversaries & Milestones | Gentle Gold (Celebration) | milestone-500| #f59e0b |
+| Component / Use Case         | Color Role                       | Tailwind Color | Hex Code |
+| :--------------------------- | :------------------------------- | :------------- | :------- |
+| Main UI & Backgrounds        | Deep Violet (Calm & Trust)       | violet-950     | #4c1d95  |
+| Primary Actions / Cycle Logs | Vibrant Pink (Intimacy & Energy) | berry-500      | #f43f5e  |
+| Anniversaries & Milestones   | Gentle Gold (Celebration)        | milestone-500  | #f59e0b  |
 
 ---
 
 ## 🏗 Architecture & Database Flow
 
+<code>
 [ React Native UI ]
 │
 ▼ (Instant Read/Write)
@@ -47,7 +48,7 @@ The user interface leverages a premium, calming, and romantic palette optimized 
 │
 ▼ (Background Sync Engine)
 [ Supabase Backend ] <───(Realtime Sync)───> [ Partner's Device ]
-
+</code>
 
 1. Local Writes: All user logs (period tracking, anniversary updates) are written instantly to the local SQLite database.
 2. Background Sync: A sync manager detects network availability and pushes changes to Supabase via Postgres Changes/Websockets.
@@ -57,9 +58,15 @@ The user interface leverages a premium, calming, and romantic palette optimized 
 
 ## 🔒 Security & Privacy
 
-Privacy is paramount for this project. 
-* All sensitive health data is isolated to the specific user profile before sync.
-* Secure Row-Level Security (RLS) policies are enforced in Supabase to ensure only authenticated partners can access the shared database cluster.
+Privacy is paramount for this project.
+
+- All sensitive health data is isolated to the specific user profile before sync.
+- Secure Row-Level Security (RLS) policies are enforced in Supabase to ensure only authenticated partners can access the shared database cluster.
 
 ---
+
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Xennus352/Unforgotten?utm_source=oss&utm_medium=github&utm_campaign=Xennus352%2FUnforgotten&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
+---
+
 Created with 💜 by S for H.
