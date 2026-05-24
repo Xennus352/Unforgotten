@@ -8,12 +8,28 @@ import {
 import type { Milestone } from "@/types/milestone";
 import { useCallback, useEffect, useState } from "react";
 
+async function loadInitialData() {
+  const [items, start] = await Promise.all([
+    fetchMilestones(),
+    fetchRelationshipStart(),
+  ]);
+  return { items, start };
+}
+
 export function useMilestones() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [relationshipStart, setRelationshipStart] = useState<string | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadInitialData().then(({ items, start }) => {
+      setMilestones(items);
+      setRelationshipStart(start);
+      setLoading(false);
+    });
+  }, []);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -28,10 +44,6 @@ export function useMilestones() {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    reload();
-  }, [reload]);
 
   const addMilestone = useCallback(
     async (input: NewMilestone) => {

@@ -4,12 +4,7 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import React, { useEffect } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -60,6 +55,7 @@ const WaterDropletButton = ({
     iconScale.value = withSpring(isFocused ? 1.15 : 1, GLASS_SPRING);
     iconTranslateY.value = withSpring(isFocused ? -4 : 0, GLASS_SPRING);
     labelOpacity.value = withSpring(isFocused ? 1 : 0.7, GLASS_SPRING);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
   const iconAnimatedStyle = useAnimatedStyle(() => ({
@@ -112,19 +108,14 @@ export default function TabLayout() {
   const TRACK_WIDTH = TAB_BAR_WIDTH - BAR_INNER_PADDING * 2;
   const TAB_WIDTH = TRACK_WIDTH / TAB_COUNT;
 
-  const translateX = useSharedValue(0);
+  const translateX = useSharedValue(TAB_WIDTH / 2 - DROP_DIAMETER / 2);
   const movementVelocity = useSharedValue(0);
   const floating = useSharedValue(0);
 
   useEffect(() => {
-    const targetX = TAB_WIDTH / 2 - DROP_DIAMETER / 2;
-    translateX.value = targetX;
-    
-    floating.value = withRepeat(
-      withTiming(-3, { duration: 2200 }),
-      -1,
-      true
-    );
+    floating.value = withRepeat(withTiming(-3, { duration: 2200 }), -1, true);
+    // floating is a Reanimated shared value, not a reactive dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const snapToCenterOfTab = (index: number) => {
@@ -146,14 +137,14 @@ export default function TabLayout() {
       velocity,
       [0, TRACK_WIDTH],
       [DROP_DIAMETER, 96],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
 
     const height = interpolate(
       velocity,
       [0, TRACK_WIDTH],
       [DROP_DIAMETER, 58],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
 
     return {
@@ -162,8 +153,7 @@ export default function TabLayout() {
       borderRadius: height / 2,
       transform: [
         {
-          translateX:
-            translateX.value - (width - DROP_DIAMETER) / 2,
+          translateX: translateX.value - (width - DROP_DIAMETER) / 2,
         },
         {
           translateY: floating.value,
@@ -182,8 +172,11 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
+          //  GLOBAL SAFE AREAS INJECTED DIRECTLY HERE
           sceneStyle: {
-            //paddingBottom: getFloatingTabBarPadding(insets.bottom),
+            paddingTop: insets.top, // Automatically avoids status bar / dynamic islands across every tab page
+            paddingBottom: insets.bottom + 76 + 24, // Keeps text/scroll lists clearing perfectly over the floating absolute bar
+            backgroundColor: "transparent",
           },
           tabBarShowLabel: false,
           tabBarStyle: {
@@ -193,9 +186,9 @@ export default function TabLayout() {
             bottom: insets.bottom + 16,
             height: 76,
             borderRadius: 38,
-            backgroundColor: colors.primary,// tab color pink
+            backgroundColor: colors.primary, // tab color pink
             borderWidth: 1,
-            borderColor: "rgba(255, 255, 255, 0.5)",//water droplet border color
+            borderColor: "rgba(255, 255, 255, 0.5)", //water droplet border color
             paddingHorizontal: BAR_INNER_PADDING,
             elevation: 0,
             shadowColor: "transparent",

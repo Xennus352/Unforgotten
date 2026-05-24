@@ -44,6 +44,7 @@ export const AnimTabButton: React.FC<Props> = ({
       damping: 12,
       stiffness: 120,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focused]);
 
   const animatedStyle = useAnimatedStyle(() => {
