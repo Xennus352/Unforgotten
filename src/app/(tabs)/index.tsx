@@ -1,5 +1,5 @@
+import { colors } from "@/constants/theme";
 import { StyleSheet, Text, View } from "react-native";
-import { colors } from "@/constants/theme"
 
 export default function HomeScreen() {
   return (
@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     color: colors.neutral,
   },

@@ -1,7 +1,6 @@
 import { AddMilestoneModal } from "@/components/milestone/AddMilestoneModal";
 import { AnniversaryHero } from "@/components/milestone/AnniversaryHero";
 import { MilestoneCalendarPanel } from "@/components/milestone/MilestoneCalendarPanel";
-import { MilestoneTimeline } from "@/components/milestone/MilestoneTimeline";
 import { SetAnniversaryCard } from "@/components/milestone/SetAnniversaryCard";
 import { colors } from "@/constants/theme";
 import { useMilestones } from "@/hooks/useMilestones";
@@ -16,10 +15,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MilestoneScreen() {
-  const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
   const {
     milestones,
@@ -44,36 +41,35 @@ export default function MilestoneScreen() {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            { paddingTop: insets.top + 8, paddingBottom: 24 },
-          ]}
+          style={styles.scrollViewWrapper}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          bounces={false}
         >
-          <Text style={styles.screenTitle}>🌸 Love Journey</Text>
-
-          {!relationshipStart ? (
-            <SetAnniversaryCard onSave={setAnniversary} />
-          ) : (
-            <AnniversaryHero
-              daysTogether={days}
-              sinceLabel={formatDisplayDate(relationshipStart)}
-            />
-          )}
-
+          {/* 1. Calendar Panel sits completely at the top layout index now */}
           <MilestoneCalendarPanel milestones={milestones} />
 
-          <MilestoneTimeline items={milestones} />
+          <View style={styles.contentBody}>
+            {/* 2. Golden relationship banner card stays cleanly nested under it */}
+            {!relationshipStart ? (
+              <SetAnniversaryCard onSave={setAnniversary} />
+            ) : (
+              <AnniversaryHero
+                daysTogether={days}
+                sinceLabel={formatDisplayDate(relationshipStart)}
+              />
+            )}
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.addButton,
-              pressed && styles.addButtonPressed,
-            ]}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.addButtonText}>+ Add a milestone</Text>
-          </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.addButton,
+                pressed && styles.addButtonPressed,
+              ]}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={styles.addButtonText}>+ Add a milestone</Text>
+            </Pressable>
+          </View>
         </ScrollView>
       )}
 
@@ -95,14 +91,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  scroll: {
-    paddingHorizontal: 20,
-    gap: 24,
+  scrollViewWrapper: {
+    flex: 1,
   },
-  screenTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#5A4B50",
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  contentBody: {
+    paddingHorizontal: 20,
+    gap: 20,
+    marginTop: 16, // Adds a clean layout gap directly under the berry header card
   },
   addButton: {
     marginTop: 8,

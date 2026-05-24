@@ -1,182 +1,135 @@
-import { colors } from "@/constants/theme";
 import type { Milestone } from "@/types/milestone";
-import {
-  milestoneMarkedDates,
-  milestonesToTimelineEvents,
-} from "@/utils/milestoneEvents";
 import { toIsoDate } from "@/utils/date";
+import { milestoneMarkedDates } from "@/utils/milestoneEvents";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import {
-  CalendarProvider,
-  Timeline,
-  WeekCalendar,
-} from "react-native-calendars";
+import { CalendarProvider, WeekCalendar } from "react-native-calendars";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   milestones: Milestone[];
 };
 
-const TIMELINE_THEME = {
-  event: {
-    opacity: 0.95,
-    borderRadius: 8,
-    paddingLeft: 8,
-  },
-  eventTitle: {
-    fontSize: 14,
-    fontWeight: "700" as const,
-    color: "#5A4B50",
-  },
-  eventSummary: {
-    fontSize: 12,
-    color: colors.neutral,
-  },
-  timeLabel: {
-    fontSize: 12,
-    color: "rgba(90, 75, 80, 0.55)",
-  },
-  line: {
-    backgroundColor: "rgba(255, 255, 255, 0.45)",
-  },
-};
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
 export function MilestoneCalendarPanel({ milestones }: Props) {
+  const insets = useSafeAreaInsets();
   const today = toIsoDate(new Date());
   const [selectedDate, setSelectedDate] = useState(today);
 
-  const events = useMemo(
-    () => milestonesToTimelineEvents(milestones),
-    [milestones],
-  );
+  const headerFormattedDate = useMemo(() => {
+    const d = new Date(selectedDate);
+    if (isNaN(d.getTime())) return "";
+    return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  }, [selectedDate]);
+
+  const currentMonthName = useMemo(() => {
+    const d = new Date(selectedDate);
+    if (isNaN(d.getTime())) return "";
+    return MONTH_NAMES[d.getMonth()];
+  }, [selectedDate]);
 
   const markedDates = useMemo(() => {
     const marks = milestoneMarkedDates(milestones);
+    
+    Object.keys(marks).forEach((key) => {
+      if (marks[key]) {
+        marks[key].selected = false;
+      }
+    });
+
     const existing = marks[selectedDate];
     marks[selectedDate] = {
       ...existing,
       marked: existing?.marked ?? false,
       selected: true,
-      selectedColor: "#2DD4BF",
-      dotColor: existing?.dotColor ?? "#f59e0b",
     };
-    return marks;
+    return { ...marks };
   }, [milestones, selectedDate]);
-
-  const dayEvents = useMemo(
-    () => events.filter((event) => event.start.startsWith(selectedDate)),
-    [events, selectedDate],
-  );
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.heading}>Love calendar</Text>
-      <Text style={styles.subheading}>Pick a day to see your moments</Text>
-
       <CalendarProvider
         date={selectedDate}
         onDateChanged={setSelectedDate}
-        style={styles.provider}
       >
-        <View style={styles.weekStrip}>
-          <WeekCalendar
-            firstDay={1}
-            markedDates={markedDates}
-            allowShadow={false}
-            theme={{
-              backgroundColor: "transparent",
-              calendarBackground: "transparent",
-              textSectionTitleColor: colors.neutral,
-              selectedDayBackgroundColor: "#2DD4BF",
-              selectedDayTextColor: "#fff",
-              todayTextColor: "#E91E63",
-              dayTextColor: "#5A4B50",
-              textDisabledColor: "rgba(90, 75, 80, 0.35)",
-              dotColor: colors.tertiary,
-              selectedDotColor: "#E91E63",
-            }}
-          />
-        </View>
-
-        <View style={styles.timelineShell}>
+        {/* The clean header block container with the safe padding top metrics injected */}
+        <View style={[styles.headerContainerBlock, { paddingTop: insets.top + 12 }]}>
           <LinearGradient
-            colors={["#F4F9E8", "#E3F2D8", "#D4EBCB"]}
+            colors={["#8C4F6e", "#5A344B"]} 
             style={StyleSheet.absoluteFill}
           />
-          <Timeline
-            date={selectedDate}
-            events={dayEvents}
-            start={6}
-            end={22}
-            scrollToFirst
-            showNowIndicator
-            theme={TIMELINE_THEME}
-            renderEvent={(event) => (
-              <View
-                style={[
-                  styles.eventCard,
-                  { backgroundColor: event.color ?? MILESTONE_EVENT_COLOR },
-                ]}
-              >
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                {event.summary ? (
-                  <Text style={styles.eventSummary}>{event.summary}</Text>
-                ) : null}
-              </View>
-            )}
-          />
+          
+          <View style={styles.topMetaRow}>
+            <Text style={styles.dateMetaText}>{headerFormattedDate}</Text>
+            <Text style={styles.monthLargeTitle}>{currentMonthName}</Text>
+          </View>
+
+          <View style={styles.weekStripContainer}>
+            <WeekCalendar
+              firstDay={1}
+              markedDates={markedDates}
+              allowShadow={false}
+              theme={{
+                backgroundColor: "transparent",
+                calendarBackground: "transparent",
+                textSectionTitleColor: "rgba(255, 255, 255, 0.55)",
+                textDayHeaderFontSize: 12,
+                textDayHeaderFontWeight: "600",
+                selectedDayBackgroundColor: "#FFFFFF",
+                selectedDayTextColor: "#5A344B",
+                todayTextColor: "#FF8C94",
+                dayTextColor: "#FFFFFF",
+                textDisabledColor: "rgba(255, 255, 255, 0.25)",
+                dotColor: "rgba(255, 255, 255, 0.6)",
+                selectedDotColor: "#5A344B",
+              }}
+            />
+          </View>
         </View>
       </CalendarProvider>
     </View>
   );
 }
 
-const MILESTONE_EVENT_COLOR = "rgba(252, 231, 243, 0.95)";
-
 const styles = StyleSheet.create({
   wrapper: {
-    gap: 8,
+    width: "100%",
   },
-  heading: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#5A4B50",
+  headerContainerBlock: {
+    paddingBottom: 10,
+    //borderBottomLeftRadius: 18,
+    //borderBottomRightRadius: 18,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    //shadowRadius: 6,
   },
-  subheading: {
-    fontSize: 14,
-    color: colors.neutral,
+  topMetaRow: {
+    paddingHorizontal: 24,
     marginBottom: 4,
   },
-  provider: {
-    borderRadius: 20,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.65)",
+  dateMetaText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.65)",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
-  weekStrip: {
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
-    paddingBottom: 4,
+  monthLargeTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginTop: 2,
   },
-  timelineShell: {
-    height: 320,
-    overflow: "hidden",
-  },
-  eventCard: {
-    flex: 1,
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "rgba(233, 30, 99, 0.15)",
-  },
-  eventTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#5A4B50",
-  },
-  eventSummary: {
-    fontSize: 12,
-    color: colors.neutral,
+  weekStripContainer: {
+    minHeight: 60,
     marginTop: 4,
   },
 });
