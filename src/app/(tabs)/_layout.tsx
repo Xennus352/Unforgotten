@@ -106,7 +106,7 @@ export default function TabLayout() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const BAR_MARGIN = 20;
+  const BAR_MARGIN = 5;
   const BAR_INNER_PADDING = 8;
   const TAB_BAR_WIDTH = width - BAR_MARGIN * 2;
   const TRACK_WIDTH = TAB_BAR_WIDTH - BAR_INNER_PADDING * 2;
@@ -182,6 +182,9 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
+          sceneStyle: {
+            //paddingBottom: getFloatingTabBarPadding(insets.bottom),
+          },
           tabBarShowLabel: false,
           tabBarStyle: {
             position: "absolute",
@@ -190,9 +193,9 @@ export default function TabLayout() {
             bottom: insets.bottom + 16,
             height: 76,
             borderRadius: 38,
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primary,// tab color pink
             borderWidth: 1,
-            borderColor: "rgba(255, 255, 255, 0.5)",
+            borderColor: "rgba(255, 255, 255, 0.5)",//water droplet border color
             paddingHorizontal: BAR_INNER_PADDING,
             elevation: 0,
             shadowColor: "transparent",
