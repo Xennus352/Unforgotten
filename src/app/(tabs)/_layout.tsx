@@ -1,4 +1,5 @@
 import { colors } from "@/constants/theme";
+import { getFloatingTabBarPadding } from "@/constants/layout";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -182,6 +183,9 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
+          sceneStyle: {
+            paddingBottom: getFloatingTabBarPadding(insets.bottom),
+          },
           tabBarShowLabel: false,
           tabBarStyle: {
             position: "absolute",
