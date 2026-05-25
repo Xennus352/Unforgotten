@@ -1,3 +1,4 @@
+import { colors } from "@/constants/theme";
 import { formatDisplayDate, toIsoDate } from "@/utils/date";
 import DateTimePicker, {
   DateTimePickerAndroid,
@@ -72,16 +73,16 @@ export function DatePickerField({
 const styles = StyleSheet.create({
   dateButton: {
     borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.5)",
+    borderColor: "rgba(255, 194, 209, 0.8)",
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 14,
-    backgroundColor: "rgba(254, 243, 199, 0.5)",
+    backgroundColor: colors.white,
   },
   dateButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#92400E",
+    color: "#4A3E3F",
     textAlign: "center",
   },
 });

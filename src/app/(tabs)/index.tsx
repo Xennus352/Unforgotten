@@ -93,6 +93,7 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* header  */}
         <View style={styles.statusCapsule}>
           <View style={styles.statusHeaderRow}>
             <Text style={styles.statusTitle}>Period Tracker Insights</Text>
@@ -107,7 +108,7 @@ export default function Index() {
                   size={14}
                   color={colors.neutral}
                 />
-                <Text style={styles.settingsBadgeText}>Configure</Text>
+                <Text style={styles.settingsBadgeText}>Set up</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -120,7 +121,7 @@ export default function Index() {
             <Text style={{ fontWeight: "700" }}>{periodLength} Days</Text>
           </Text>
         </View>
-
+        {/* Calendar */}
         <Calendar
           currentDate={currentDate}
           onMonthChange={handleMonthChange}
@@ -128,6 +129,8 @@ export default function Index() {
           predictedDates={computedPredictedDates}
           onToggleDate={toggleDate}
         />
+
+        
       </ScrollView>
 
       <OnboardingModal
