@@ -87,11 +87,12 @@ function SwipeableRow({
   );
 }
 
+
 export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
-   
-  const sorted = [...items].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  
+  const sorted = [...items].sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
 
   return (
     <View style={styles.section}>
@@ -109,7 +110,7 @@ export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
           <SwipeableRow
             key={item.id}
             item={item}
-            isLast={index === sorted.length - 1} // Line connects appropriately
+            isLast={index === sorted.length - 1} 
             onEdit={onEdit}
             onDelete={onDelete}
           />
@@ -118,6 +119,10 @@ export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
     </View>
   );
 }
+
+
+
+
 
 const styles = StyleSheet.create({
   section: {
