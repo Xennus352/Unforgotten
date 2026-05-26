@@ -22,7 +22,7 @@ export default function MilestoneScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
 
-  // ✅ FIXED: Destructured addMilestone from your hook context
+ 
   const { milestones, relationshipStart, loading, reload, addMilestone } = useMilestones();
 
   const days = relationshipStart ? daysTogetherSince(relationshipStart) : 0;
@@ -46,7 +46,6 @@ export default function MilestoneScreen() {
       if (editingMilestone) {
         await updateMilestone(editingMilestone.id, fields);
       } else {
-        // ✅ FIXED: Actively called addMilestone workflow function instead of leaving it empty
         await addMilestone(fields);
       }
       
