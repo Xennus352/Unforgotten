@@ -2,94 +2,27 @@ import { colors } from "@/constants/theme";
 import type { Milestone } from "@/types/milestone";
 import { formatDisplayDate } from "@/utils/date";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import Swipeable from "react-native-gesture-handler/Swipeable";
+import { useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SwipeableRow } from "./SwipeableRow";
 
 type Props = {
   items: Milestone[];
-  onEdit?: (item: Milestone) => void;
-  onDelete?: (id: string) => void; 
+  onEdit: (item: Milestone) => void;
+  onDelete: (id: string) => void;
 };
 
-// Isolated individual item component parameters
-interface SwipeableRowProps {
-  item: Milestone;
-  isLast: boolean;
-  onEdit?: (item: Milestone) => void;
-  onDelete?: (id: string) => void; // ✅ FIXED: Signature aligned with parent interface
-}
-
-function SwipeableRow({
-  item,
-  isLast,
-  onEdit,
-  onDelete,
-}: SwipeableRowProps) {
-  const swipeableRef = React.useRef<Swipeable>(null);
-
-  // Renders action panels on the right side
-  const renderRightActions = () => {
-    return (
-      <View style={styles.actionsContainer}>
-        {/* EDIT BUTTON */}
-        <Pressable
-          style={[styles.actionButton, styles.editActionButton]}
-          onPress={() => {
-            swipeableRef.current?.close();
-            onEdit?.(item);
-          }}
-        >
-          <Ionicons name="pencil-outline" size={20} color="#FFF" />
-          <Text style={styles.actionButtonText}>Edit</Text>
-        </Pressable>
-
-        {/* DELETE BUTTON */}
-        <Pressable
-          style={[styles.actionButton, styles.deleteActionButton]}
-          onPress={() => {
-            swipeableRef.current?.close();
-            onDelete?.(item.id); 
-          }}
-        >
-          <Ionicons name="trash-outline" size={20} color="#FFF" />
-          <Text style={styles.actionButtonText}>Delete</Text>
-        </Pressable>
-      </View>
-    );
-  };
-
-  return (
-    <View style={styles.row}>
-      {/* TIMELINE LEFT TRACK EMBED */}
-      <View style={styles.rail}>
-        <View style={styles.dot}>
-          <Text style={styles.emoji}>{item.emoji}</Text>
-        </View>
-        {!isLast && <View style={styles.line} />}
-      </View>
-
-      {/* GESTURE SLIDER FRAMEWAY */}
-      <Swipeable
-        ref={swipeableRef}
-        renderRightActions={renderRightActions}
-        friction={2}
-        rightThreshold={40}
-        containerStyle={styles.swipeableContainer}
-      >
-        <View style={[styles.card, isLast && styles.cardLast]}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.date}>{formatDisplayDate(item.date)}</Text>
-          {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
-        </View>
-      </Swipeable>
-    </View>
-  );
-}
-
-
 export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
-  
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
+
   const sorted = [...items].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
@@ -107,26 +40,68 @@ export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
 
       <View style={styles.list}>
         {sorted.map((item, index) => (
-          <SwipeableRow
+          <TouchableOpacity
             key={item.id}
-            item={item}
-            isLast={index === sorted.length - 1} 
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+            activeOpacity={0.6}
+            onPress={() => setSelectedMilestone(item)} 
+          >
+            <SwipeableRow
+              item={item}
+              isLast={index === sorted.length - 1}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          </TouchableOpacity>
         ))}
       </View>
+
+      {/* POPUP READ-ONLY DETAILS DISPLAY MODAL */}
+      <Modal
+        visible={!!selectedMilestone}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setSelectedMilestone(null)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setSelectedMilestone(null)}
+        >
+          <View style={styles.modalContent}>
+            {selectedMilestone && (
+              <View>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalEmoji}>{selectedMilestone.emoji || "💖"}</Text>
+                  <View style={styles.modalMeta}>
+                    <Text style={styles.modalTitleText}>{selectedMilestone.title}</Text>
+                    <Text style={styles.modalDateText}>
+                      {formatDisplayDate(selectedMilestone.date)}
+                    </Text>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => setSelectedMilestone(null)}
+                    style={styles.closeButton}
+                  >
+                    <Ionicons name="close" size={20} color="#A39399" />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.modalScrollBody} showsVerticalScrollIndicator={true}>
+                  <Text style={styles.modalFullNoteText}>
+                    {selectedMilestone.note || "No extra notes recorded for this milestone."}
+                  </Text>
+                </ScrollView>
+              </View>
+            )}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
-
-
-
-
 const styles = StyleSheet.create({
   section: {
-    marginTop: 8,
+    marginTop: 10,
   },
   heading: {
     fontSize: 20,
@@ -136,106 +111,77 @@ const styles = StyleSheet.create({
   subheading: {
     fontSize: 14,
     color: colors.neutral,
-    marginTop: 4,
-    marginBottom: 12,
+    marginTop: 2,
+    marginBottom: 20,
   },
   empty: {
+    textAlign: "center",
+    color: "#A39399",
+    marginVertical: 20,
     fontSize: 14,
-    color: colors.neutral,
-    lineHeight: 20,
-    marginBottom: 16,
-    fontStyle: "italic",
   },
   list: {
-    gap: 0,
-  },
-  row: {
-    flexDirection: "row",
-    minHeight: 88,
-  },
-  rail: {
-    width: 44,
-    alignItems: "center",
-  },
-  dot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#FFF",
-    borderWidth: 2,
-    borderColor: colors.tertiary,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1,
-  },
-  emoji: {
-    fontSize: 18,
-  },
-  line: {
-    position: "absolute",
-    top: 40,
-    bottom: -8,
-    width: 2,
-    backgroundColor: "rgba(245, 158, 11, 0.35)",
-    borderRadius: 1,
-  },
-  swipeableContainer: {
-    flex: 1,
-    marginLeft: 12,
-    marginBottom: 16,
-  },
-  card: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 194, 209, 0.6)",
-  },
-  cardLast: {
-    marginBottom: 0,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#5A4B50",
-  },
-  date: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.tertiary,
     marginTop: 4,
   },
-  note: {
-    fontSize: 13,
-    color: colors.neutral,
-    marginTop: 6,
-    lineHeight: 18,
-  },
-  actionsContainer: {
-    flexDirection: "row",
-    width: 140,
-    height: "100%",
-    paddingLeft: 8,
-  },
-  actionButton: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: "rgba(90, 75, 80, 0.35)", 
     justifyContent: "center",
     alignItems: "center",
-    height: "100%",
-    borderRadius: 16,
+    padding: 24,
   },
-  editActionButton: {
-    backgroundColor: "#A39399", 
-    marginRight: 6,
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderRadius: 24,
+    width: "100%",
+    maxWidth: 320,
+    padding: 20,
+    shadowColor: "#5A4B50",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  deleteActionButton: {
-    backgroundColor: "#E91E63", 
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: "#FDF0F3",
+    paddingBottom: 12,
+    marginBottom: 14,
   },
-  actionButtonText: {
-    color: "#FFF",
-    fontSize: 11,
-    fontWeight: "700",
-    marginTop: 3,
+  modalEmoji: {
+    fontSize: 30,
+    marginRight: 12,
   },
-}); 
+  modalMeta: {
+    flex: 1,
+    paddingRight: 6,
+  },
+  modalTitleText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#5A4B50",
+  },
+  modalDateText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.tertiary,
+    marginTop: 2,
+  },
+  closeButton: {
+    backgroundColor: "#FFFBFC",
+    padding: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#FDF0F3",
+  },
+  modalScrollBody: {
+    maxHeight: 180,
+  },
+  modalFullNoteText: {
+    fontSize: 14,
+    color: "#5A4B50",
+    lineHeight: 22,
+  },
+});
