@@ -1,7 +1,7 @@
 import type { Milestone } from "@/types/milestone";
 import * as SQLite from "expo-sqlite";
 
-const DB_NAME = "unforgotten.db";
+const DB_NAME = "milestones.db";
 const RELATIONSHIP_START_KEY = "relationship_start";
 
 type MilestoneRow = {
@@ -110,4 +110,37 @@ export async function insertMilestone(input: NewMilestone): Promise<Milestone> {
 export async function deleteMilestone(id: string): Promise<void> {
   const db = await getDatabase();
   await db.runAsync("DELETE FROM milestones WHERE id = ?", id);
+}
+
+
+export async function updateMilestone(
+  id: string,
+  updates: Partial<NewMilestone>
+): Promise<void> {
+  const db = await getDatabase();
+  const sets: string[] = [];
+  const args: any[] = [];
+
+  if (updates.title !== undefined) {
+    sets.push("title = ?");
+    args.push(updates.title.trim());
+  }
+  if (updates.date !== undefined) {
+    sets.push("date = ?");
+    args.push(updates.date);
+  }
+  if (updates.emoji !== undefined) {
+    sets.push("emoji = ?");
+    args.push(updates.emoji);
+  }
+  if (updates.note !== undefined) {
+    sets.push("note = ?");
+    args.push(updates.note.trim() || null);
+  }
+
+  if (sets.length === 0) return;
+
+  args.push(id);
+  const query = `UPDATE milestones SET ${sets.join(", ")} WHERE id = ?`;
+  await db.runAsync(query, ...args);
 }

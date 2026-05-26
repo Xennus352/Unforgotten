@@ -5,6 +5,8 @@ import { MilestoneTimeline } from "@/components/milestone/MilestoneTimeline";
 import { SetAnniversaryCard } from "@/components/milestone/SetAnniversaryCard";
 import { colors } from "@/constants/theme";
 import { useMilestones } from "@/hooks/useMilestones";
+import { deleteMilestone, updateMilestone } from "@/lib/db/milestones";
+import type { Milestone } from "@/types/milestone";
 import { daysTogetherSince, formatDisplayDate } from "@/utils/date";
 import { useState } from "react";
 import {
@@ -18,16 +20,50 @@ import {
 
 export default function MilestoneScreen() {
   const [modalVisible, setModalVisible] = useState(false);
-  const { milestones, relationshipStart, loading, addMilestone } =
-    useMilestones();
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+
+  // ✅ FIXED: Destructured addMilestone from your hook context
+  const { milestones, relationshipStart, loading, reload, addMilestone } = useMilestones();
 
   const days = relationshipStart ? daysTogetherSince(relationshipStart) : 0;
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMilestone(id);
+      await reload(); 
+    } catch (error) {
+      console.error("Failed to delete milestone row:", error);
+    }
+  };
+
+  const handleEdit = (milestone: Milestone) => {
+    setEditingMilestone(milestone);
+    setModalVisible(true); 
+  };
+
+  const handleSaveOrUpdate = async (fields: { title: string; note?: string; emoji: string; date: string }) => {
+    try {
+      if (editingMilestone) {
+        await updateMilestone(editingMilestone.id, fields);
+      } else {
+        // ✅ FIXED: Actively called addMilestone workflow function instead of leaving it empty
+        await addMilestone(fields);
+      }
+      
+      setModalVisible(false);
+      setEditingMilestone(null);
+      
+      await reload();
+    } catch (error) {
+      console.error("Error committing milestone modification task:", error);
+    }
+  };
 
   return (
     <View style={styles.root}>
       {loading ? (
         <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.secondary} />
         </View>
       ) : (
         <ScrollView
@@ -36,11 +72,9 @@ export default function MilestoneScreen() {
           showsVerticalScrollIndicator={false}
           bounces={true}
         >
-          {/* Top Panel: Calendar Activity Strip */}
           <MilestoneCalendarPanel milestones={milestones} />
 
           <View style={styles.contentBody}>
-            {/* Interactive Hero Grid section */}
             {!relationshipStart ? (
               <SetAnniversaryCard onSave={async (d) => {}} />
             ) : (
@@ -52,14 +86,16 @@ export default function MilestoneScreen() {
                   />
                 </View>
 
-                {/* Asymmetric Sidebar Quick Action */}
                 <View style={styles.heroSideColumn}>
                   <Pressable
                     style={({ pressed }) => [
                       styles.actionCard,
                       pressed && styles.actionCardPressed,
                     ]}
-                    onPress={() => setModalVisible(true)}
+                    onPress={() => {
+                      setEditingMilestone(null); 
+                      setModalVisible(true);
+                    }}
                   >
                     <View style={styles.plusIconCircle}>
                       <Text style={styles.plusIconText}>+</Text>
@@ -77,9 +113,12 @@ export default function MilestoneScreen() {
               </View>
             )}
 
-            {/* Structured Minimal Timeline Section */}
             <View style={styles.timelineContainer}>
-              <MilestoneTimeline items={milestones} />
+              <MilestoneTimeline 
+                items={milestones} 
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </View>
           </View>
         </ScrollView>
@@ -87,8 +126,12 @@ export default function MilestoneScreen() {
 
       <AddMilestoneModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSave={addMilestone}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingMilestone(null);
+        }}
+        onSave={handleSaveOrUpdate}
+        initialData={editingMilestone ?? undefined} 
       />
     </View>
   );
@@ -97,7 +140,7 @@ export default function MilestoneScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.creamBg,
+    backgroundColor: "transparent",
   },
   loading: {
     flex: 1,

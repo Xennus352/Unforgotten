@@ -301,8 +301,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   label: {
-    fontSize: 10,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "900",
     letterSpacing: 0.3,
   },
   dropletAbsoluteTrack: {

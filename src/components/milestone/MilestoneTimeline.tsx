@@ -1,15 +1,96 @@
 import { colors } from "@/constants/theme";
 import type { Milestone } from "@/types/milestone";
 import { formatDisplayDate } from "@/utils/date";
-import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 
 type Props = {
   items: Milestone[];
+  onEdit?: (item: Milestone) => void;
+  onDelete?: (id: string) => void; 
 };
 
-export function MilestoneTimeline({ items }: Props) {
+// Isolated individual item component parameters
+interface SwipeableRowProps {
+  item: Milestone;
+  isLast: boolean;
+  onEdit?: (item: Milestone) => void;
+  onDelete?: (id: string) => void; // ✅ FIXED: Signature aligned with parent interface
+}
+
+function SwipeableRow({
+  item,
+  isLast,
+  onEdit,
+  onDelete,
+}: SwipeableRowProps) {
+  const swipeableRef = React.useRef<Swipeable>(null);
+
+  // Renders action panels on the right side
+  const renderRightActions = () => {
+    return (
+      <View style={styles.actionsContainer}>
+        {/* EDIT BUTTON */}
+        <Pressable
+          style={[styles.actionButton, styles.editActionButton]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onEdit?.(item);
+          }}
+        >
+          <Ionicons name="pencil-outline" size={20} color="#FFF" />
+          <Text style={styles.actionButtonText}>Edit</Text>
+        </Pressable>
+
+        {/* DELETE BUTTON */}
+        <Pressable
+          style={[styles.actionButton, styles.deleteActionButton]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onDelete?.(item.id); 
+          }}
+        >
+          <Ionicons name="trash-outline" size={20} color="#FFF" />
+          <Text style={styles.actionButtonText}>Delete</Text>
+        </Pressable>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.row}>
+      {/* TIMELINE LEFT TRACK EMBED */}
+      <View style={styles.rail}>
+        <View style={styles.dot}>
+          <Text style={styles.emoji}>{item.emoji}</Text>
+        </View>
+        {!isLast && <View style={styles.line} />}
+      </View>
+
+      {/* GESTURE SLIDER FRAMEWAY */}
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={renderRightActions}
+        friction={2}
+        rightThreshold={40}
+        containerStyle={styles.swipeableContainer}
+      >
+        <View style={[styles.card, isLast && styles.cardLast]}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.date}>{formatDisplayDate(item.date)}</Text>
+          {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
+        </View>
+      </Swipeable>
+    </View>
+  );
+}
+
+export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
+   
   const sorted = [...items].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   return (
@@ -24,27 +105,15 @@ export function MilestoneTimeline({ items }: Props) {
       ) : null}
 
       <View style={styles.list}>
-        {sorted.map((item, index) => {
-          const isLast = index === sorted.length - 1;
-          return (
-            <View key={item.id} style={styles.row}>
-              <View style={styles.rail}>
-                <View style={styles.dot}>
-                  <Text style={styles.emoji}>{item.emoji}</Text>
-                </View>
-                {!isLast && <View style={styles.line} />}
-              </View>
-
-              <View style={[styles.card, isLast && styles.cardLast]}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.date}>{formatDisplayDate(item.date)}</Text>
-                {item.note ? (
-                  <Text style={styles.note}>{item.note}</Text>
-                ) : null}
-              </View>
-            </View>
-          );
-        })}
+        {sorted.map((item, index) => (
+          <SwipeableRow
+            key={item.id}
+            item={item}
+            isLast={index === sorted.length - 1} // Line connects appropriately
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
       </View>
     </View>
   );
@@ -105,10 +174,13 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(245, 158, 11, 0.35)",
     borderRadius: 1,
   },
-  card: {
+  swipeableContainer: {
     flex: 1,
     marginLeft: 12,
     marginBottom: 16,
+  },
+  card: {
+    flex: 1,
     padding: 16,
     borderRadius: 16,
     backgroundColor: "rgba(255, 255, 255, 0.85)",
@@ -135,4 +207,30 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 18,
   },
-});
+  actionsContainer: {
+    flexDirection: "row",
+    width: 140,
+    height: "100%",
+    paddingLeft: 8,
+  },
+  actionButton: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100%",
+    borderRadius: 16,
+  },
+  editActionButton: {
+    backgroundColor: "#A39399", 
+    marginRight: 6,
+  },
+  deleteActionButton: {
+    backgroundColor: "#E91E63", 
+  },
+  actionButtonText: {
+    color: "#FFF",
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 3,
+  },
+}); 

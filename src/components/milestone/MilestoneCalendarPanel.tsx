@@ -2,6 +2,7 @@ import { colors } from "@/constants/theme";
 import type { Milestone } from "@/types/milestone";
 import { toIsoDate } from "@/utils/date";
 import { milestoneMarkedDates } from "@/utils/milestoneEvents";
+import { Ionicons } from "@expo/vector-icons"; // Added Ionicons Import
 import { useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,18 +12,8 @@ type Props = {
 };
 
 const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -33,14 +24,17 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
   const [selectedDate, setSelectedDate] = useState(today);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Parse marked milestones dates array
+  // Dynamic real-time date compilation string
+  const dynamicTodayString = useMemo(() => {
+    const d = new Date();
+    return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+  }, []);
+
   const milestoneMap = useMemo(() => {
     const marks = milestoneMarkedDates(milestones);
     return marks;
   }, [milestones]);
 
-  // Generate a dynamic timeline sequence window centered around today/selected date
-  // Generates 15 days before and 15 days after for fluid responsive scrolling
   const dateStrip = useMemo(() => {
     const list = [];
     const baseDate = new Date();
@@ -60,7 +54,6 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
     return list;
   }, [milestoneMap]);
 
-  // Extract selected node metadata fields
   const currentFocus = useMemo(() => {
     const d = new Date(selectedDate);
     if (isNaN(d.getTime())) return { day: "--", month: "---", year: "" };
@@ -71,13 +64,31 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
     };
   }, [selectedDate]);
 
-  // Count milestones active in the visible pool strip for secondary visual badge metrics
   const activeMilestonesCount = useMemo(() => {
     return milestones.filter((m) => m.date === selectedDate).length;
   }, [milestones, selectedDate]);
 
   return (
     <View style={[styles.rootContainer, { paddingTop: insets.top + 12 }]}>
+      <View style={styles.scrollerSectionView}>
+        <Text style={styles.scrollerSectionTitle}>
+          Select Anchor Date
+        </Text>
+        
+        
+        <View style={styles.todayDateBadgeRow}>
+          <Ionicons 
+            name="today-outline" 
+            size={13} 
+            color={colors.neutral} 
+            style={styles.todayIconShift}
+          />
+          <Text style={styles.todayDateBadgeText}>
+            {dynamicTodayString}
+          </Text>
+        </View>
+      </View>
+
       <View style={styles.asymmetricLayoutGrid}>
         {/* LEFT COLUMN: Large Abstract Focus Panel */}
         <View style={styles.focusBlock}>
@@ -98,17 +109,13 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
 
         {/* RIGHT COLUMN: Elegant Carousel Wheels */}
         <View style={styles.scrollerWrapper}>
-          <Text style={styles.scrollerSectionTitle}>
-            Select Timestream Anchor
-          </Text>
-
           <ScrollView
             ref={scrollRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.scrollContainer}
             decelerationRate="fast"
-            snapToInterval={68} // Matches chip dimensions + margin gap
+            snapToInterval={68}
           >
             {dateStrip.map((item) => {
               const isSelected = item.isoString === selectedDate;
@@ -141,7 +148,6 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
                     {item.dayNum}
                   </Text>
 
-                  {/* Bottom tracking indicator anchor dots */}
                   <View style={styles.indicatorContainer}>
                     {item.hasMilestone && (
                       <View
@@ -164,15 +170,8 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
 
 const styles = StyleSheet.create({
   rootContainer: {
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderColor: "rgba(255, 194, 209, 0.25)",
-    paddingBottom: 20,
-    shadowColor: colors.neutral,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 12,
-    elevation: 2,
+    backgroundColor: "transparent",
+    paddingBottom: 5,
   },
   asymmetricLayoutGrid: {
     flexDirection: "row",
@@ -181,14 +180,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   focusBlock: {
-    backgroundColor: colors.creamBg,
-    borderRadius: 22,
-    width: 90,
+    backgroundColor: colors.white,
+    borderRadius: 42,
+    width: 70,
     height: 120,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "rgba(255, 194, 209, 0.4)",
+    borderColor: "rgba(255, 48, 127, 0.4)",
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
@@ -203,7 +202,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   focusDay: {
-    fontSize: 34,
+    fontSize: 24,
     fontWeight: "900",
     color: "#4A3E3F",
     lineHeight: 38,
@@ -223,7 +222,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   activeEventBadge: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.white,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -238,14 +237,35 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 120,
   },
+  scrollerSectionView: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+    paddingHorizontal: 16,
+  },
   scrollerSectionTitle: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "900",
     color: colors.neutral,
     textTransform: "uppercase",
     letterSpacing: 1,
-    marginBottom: 12,
-    paddingLeft: 4,
+    marginBottom: 10,
+  },
+  todayDateBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 10,
+  },
+  todayIconShift: {
+    marginTop: -2, 
+  },
+  todayDateBadgeText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: colors.neutral,
+    letterSpacing: 0.5,
   },
   scrollContainer: {
     paddingLeft: 2,
@@ -254,12 +274,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dateChip: {
-    width: 58,
+    width: 40,
     height: 74,
-    borderRadius: 16,
+    borderRadius: 36,
     backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderWidth: 1,
-    borderColor: "rgba(137, 113, 114, 0.12)",
+    borderColor: "rgba(249, 3, 11, 0.12)",
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 6,
@@ -285,7 +305,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   dayNumberLabel: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "800",
     color: "#4A3E3F",
     marginTop: 2,
