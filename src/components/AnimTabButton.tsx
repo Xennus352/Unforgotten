@@ -64,7 +64,7 @@ export const AnimTabButton: React.FC<Props> = ({
         <MaterialCommunityIcons 
           name={focused ? item.activeIcon : item.inActiveIcon} 
           size={24} 
-          color={focused ? '#6200ee' : '#757575'} 
+          color={focused ? '#7700ee' : '#757575'} 
         />
         {focused && <Text style={styles.text}>{item.label}</Text>}
       </Animated.View>

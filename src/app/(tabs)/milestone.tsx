@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.neutral,
     textAlign: "center",
+    paddingHorizontal: 4,
   },
   metaStatCard: {
     flex: 1,

@@ -29,7 +29,6 @@ export function SwipeableRow({ item, isLast, onEdit, onDelete }: Props) {
   return (
     <Swipeable renderRightActions={renderRightActions}>
       <View style={styles.rowContainer}>
-        {/* Timeline Line Graphics */}
         <View style={styles.timelineLeft}>
           <View style={styles.iconCircle}>
             <Text style={styles.emojiText}>{item.emoji || "💖"}</Text>
@@ -37,7 +36,7 @@ export function SwipeableRow({ item, isLast, onEdit, onDelete }: Props) {
           {!isLast && <View style={styles.verticalLine} />}
         </View>
 
-        {/* Card Body Core */}
+       
         <View style={styles.cardContent}>
           <Text 
             numberOfLines={1} 
@@ -45,6 +44,13 @@ export function SwipeableRow({ item, isLast, onEdit, onDelete }: Props) {
             style={styles.titleStyle}
           >
             {item.title}
+          </Text>
+          <Text 
+            numberOfLines={1} 
+            ellipsizeMode="tail" 
+            style={styles.disStyle}
+          >
+            {item.note}
           </Text>
           <Text style={styles.dateStyle}>{formatDisplayDate(item.date)}</Text>
         </View>
@@ -57,7 +63,7 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: "row",
     backgroundColor: "transparent", 
-    paddingVertical: 2,
+    paddingVertical: 8,
   },
   timelineLeft: {
     alignItems: "center",
@@ -91,6 +97,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderRadius: 16,
     padding: 16,
+    gap: 8,
+    paddingVertical: 20,
     borderWidth: 1,
     borderColor: "rgba(226, 132, 156, 0.34)",
     marginBottom: 12, // Clean fixed spacing between rows
@@ -100,16 +108,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#5A4B50",
   },
+  disStyle: {
+    fontSize: 11,
+    fontWeight: "400",
+    color: colors.neutral,
+    paddingLeft: 10,
+  },
   dateStyle: {
     fontSize: 13,
     fontWeight: "700",
     color: colors.tertiary,
     marginTop: 2,
+    alignSelf: "flex-end",
   },
   actionContainer: {
-    flexDirection: "row",
-    width: 130,
-    height: 50,
+    flexDirection: "column",
+    gap: 10,
+    width: 120,
+    height: 80,
     alignSelf: "center",
     paddingLeft: 8,
   },
@@ -124,7 +140,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   deleteButton: {
-    backgroundColor: "#FEE2E2",
+    backgroundColor: "#ffc0c0",
   },
   actionText: {
     fontWeight: "600",

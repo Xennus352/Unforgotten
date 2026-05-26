@@ -1,9 +1,9 @@
 import { DatePickerField } from "@/components/milestone/DatePickerField";
 import { colors } from "@/constants/theme";
 import type { NewMilestone } from "@/lib/db/milestones";
-import type { Milestone } from "@/types/milestone"; // ✅ Added import
+import type { Milestone } from "@/types/milestone";
 import { toIsoDate } from "@/utils/date";
-import { useEffect, useState } from "react"; // ✅ Added useEffect
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -34,7 +34,6 @@ export function AddMilestoneModal({ visible, onClose, onSave, initialData }: Pro
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ 2. Sync state with editing record when modal context pivots
   useEffect(() => {
     if (visible) {
       if (initialData) {
@@ -47,6 +46,8 @@ export function AddMilestoneModal({ visible, onClose, onSave, initialData }: Pro
       }
     }
   }, [initialData, visible]);
+
+  
 
   const resetForm = () => {
     setTitle("");

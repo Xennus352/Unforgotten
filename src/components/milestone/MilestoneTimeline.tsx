@@ -55,7 +55,7 @@ export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
         ))}
       </View>
 
-      {/* POPUP READ-ONLY DETAILS DISPLAY MODAL */}
+      
       <Modal
         visible={!!selectedMilestone}
         animationType="fade"
@@ -73,6 +73,7 @@ export function MilestoneTimeline({ items, onEdit, onDelete }: Props) {
                   <Text style={styles.modalEmoji}>{selectedMilestone.emoji || "💖"}</Text>
                   <View style={styles.modalMeta}>
                     <Text style={styles.modalTitleText}>{selectedMilestone.title}</Text>
+                    <Text style={styles.modalFullNoteText}>{selectedMilestone.note}</Text>
                     <Text style={styles.modalDateText}>
                       {formatDisplayDate(selectedMilestone.date)}
                     </Text>

@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
     color: colors.neutral,
     letterSpacing: 1.2,
     textTransform: "uppercase",
+    padding:1,
   },
   days: {
     fontSize: 60,
@@ -87,5 +88,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.neutral,
     letterSpacing: 0.5,
+    paddingHorizontal:0.5,
   },
 });
