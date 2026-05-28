@@ -1,4 +1,9 @@
-import { colors } from "@/constants/theme";
+/**
+ * Onboarding and settings modal with premium styling
+ * Handles both new user onboarding and settings configuration
+ */
+
+import { theme, layout } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
@@ -13,6 +18,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+const STATUSBAR_HEIGHT = Platform.OS === "ios" ? 44 : StatusBar.currentHeight || 0;
 
 interface OnboardingModalProps {
   visible: boolean;
@@ -36,35 +43,42 @@ export default function OnboardingModal({
   const [cycleFocused, setCycleFocused] = useState(false);
   const [periodFocused, setPeriodFocused] = useState(false);
 
-  const handleFinish = () => {
-    onSave(parseInt(cycle) || 28, parseInt(period) || 5);
+  const handleSave = () => {
+    const cycleValue = Math.max(21, Math.min(45, parseInt(cycle) || 28));
+    const periodValue = Math.max(2, Math.min(14, parseInt(period) || 5));
+    onSave(cycleValue, periodValue);
+  };
+
+  const handleCycleChange = (text: string) => {
+    const numeric = text.replace(/[^0-9]/g, "");
+    setCycle(numeric.slice(0, 2));
+  };
+
+  const handlePeriodChange = (text: string) => {
+    const numeric = text.replace(/[^0-9]/g, "");
+    setPeriod(numeric.slice(0, 2));
   };
 
   return (
     <Modal
       visible={visible}
-      animationType="fade"
       transparent
+      animationType="fade"
       statusBarTranslucent
     >
-      {/* SAFE OVERLAY (NO BLUR) */}
       <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.keyboardView}
         >
           <View style={styles.sheet}>
-            {/* HERO */}
-            <LinearGradient
-              colors={["rgba(255, 194, 209, 0.15)", "rgba(255, 194, 209, 0)"]}
-              style={styles.hero}
-            >
+            <View style={styles.hero}>
               <View style={styles.heroIcon}>
                 <LinearGradient
                   colors={["#FFB6C1", "#FF8DA1"]}
                   style={styles.iconGradient}
                 >
-                  <Ionicons name="heart" size={28} color={colors.white} />
+                  <Ionicons name="heart" size={28} color={theme.textInverse} />
                 </LinearGradient>
               </View>
 
@@ -74,18 +88,14 @@ export default function OnboardingModal({
 
               <Text style={styles.heroSubtitle}>
                 {isDismissable
-                  ? "Adjust your cycle tracking"
+                  ? "Adjust your cycle tracking preferences"
                   : "Let's personalize your cycle perfectly"}
               </Text>
-            </LinearGradient>
+            </View>
 
-            {/* CONTENT */}
             <View style={styles.content}>
-              {/* CYCLE */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
-                  Average Cycle Length (Days)
-                </Text>
+                <Text style={styles.inputLabel}>Average Cycle Length (Days)</Text>
 
                 <View
                   style={[
@@ -96,7 +106,7 @@ export default function OnboardingModal({
                   <Ionicons
                     name="calendar-outline"
                     size={20}
-                    color={cycleFocused ? colors.primary : colors.neutral}
+                    color={cycleFocused ? theme.primary : theme.textSecondary}
                     style={styles.inputIcon}
                   />
 
@@ -104,22 +114,22 @@ export default function OnboardingModal({
                     style={styles.input}
                     keyboardType="number-pad"
                     value={cycle}
-                    onChangeText={setCycle}
+                    onChangeText={handleCycleChange}
                     onFocus={() => setCycleFocused(true)}
                     onBlur={() => setCycleFocused(false)}
                     placeholder="28"
-                    placeholderTextColor="rgba(137,113,114,0.4)"
+                    placeholderTextColor={theme.textMuted}
                     returnKeyType="done"
                     importantForAutofill="no"
+                    accessibilityLabel="Cycle length"
+                    accessibilityHint="Enter your average cycle length in days"
+                    maxLength={2}
                   />
                 </View>
               </View>
 
-              {/* PERIOD */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
-                  Average Period Length (Days)
-                </Text>
+                <Text style={styles.inputLabel}>Average Period Length (Days)</Text>
 
                 <View
                   style={[
@@ -130,7 +140,7 @@ export default function OnboardingModal({
                   <Ionicons
                     name="water-outline"
                     size={20}
-                    color={periodFocused ? colors.primary : colors.neutral}
+                    color={periodFocused ? theme.primary : theme.textSecondary}
                     style={styles.inputIcon}
                   />
 
@@ -138,25 +148,29 @@ export default function OnboardingModal({
                     style={styles.input}
                     keyboardType="number-pad"
                     value={period}
-                    onChangeText={setPeriod}
+                    onChangeText={handlePeriodChange}
                     onFocus={() => setPeriodFocused(true)}
                     onBlur={() => setPeriodFocused(false)}
                     placeholder="5"
-                    placeholderTextColor="rgba(137,113,114,0.4)"
+                    placeholderTextColor={theme.textMuted}
                     returnKeyType="done"
                     importantForAutofill="no"
+                    accessibilityLabel="Period length"
+                    accessibilityHint="Enter your average period length in days"
+                    maxLength={2}
                   />
                 </View>
               </View>
 
-              {/* BUTTON */}
               <TouchableOpacity
                 style={styles.saveButton}
-                onPress={handleFinish}
+                onPress={handleSave}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={isDismissable ? "Apply Parameters" : "Get Started"}
               >
                 <LinearGradient
-                  colors={["#FF7EB3", "#FF758C"]}
+                  colors={["#FF7EB3", "#FF8DA1"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.buttonGradient}
@@ -167,10 +181,14 @@ export default function OnboardingModal({
                 </LinearGradient>
               </TouchableOpacity>
 
-              {/* CLOSE */}
               {isDismissable && onClose && (
-                <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                  <Text style={styles.cancelButtonText}>Cancel & Close</Text>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={onClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel"
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -181,29 +199,29 @@ export default function OnboardingModal({
   );
 }
 
-const STATUSBAR_HEIGHT =
-  Platform.OS === "ios" ? 44 : StatusBar.currentHeight || 0;
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)", // SAFE BLUR REPLACEMENT
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "flex-start",
   },
+
   keyboardView: { flex: 1 },
+
   sheet: {
-    backgroundColor: colors.white,
+    backgroundColor: theme.surface,
     borderBottomLeftRadius: 36,
     borderBottomRightRadius: 36,
     paddingTop: STATUSBAR_HEIGHT + 16,
     paddingHorizontal: 20,
     paddingBottom: 36,
-    shadowColor: "#000",
+    elevation: 20,
+    shadowColor: theme.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
-    elevation: 20,
   },
+
   hero: {
     alignItems: "center",
     paddingBottom: 20,
@@ -211,7 +229,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,194,209,0.2)",
   },
+
   heroIcon: { marginBottom: 12 },
+
   iconGradient: {
     width: 64,
     height: 64,
@@ -219,66 +239,82 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
   heroTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: colors.neutral,
+    color: theme.text,
     marginBottom: 4,
   },
+
   heroSubtitle: {
     fontSize: 13,
-    color: "rgba(137,113,114,0.7)",
+    color: theme.textMuted,
     textAlign: "center",
   },
+
   content: { paddingTop: 20 },
+
   inputGroup: { marginBottom: 16 },
+
   inputLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.neutral,
+    color: theme.text,
     marginBottom: 6,
   },
+
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.creamBg,
+    backgroundColor: theme.cardSecondary,
     borderRadius: 16,
     paddingHorizontal: 14,
     borderWidth: 1.5,
     borderColor: "transparent",
+    minHeight: layout.touchTarget.minimum,
   },
+
   inputWrapperFocused: {
-    borderColor: colors.primary,
+    borderColor: theme.primary,
   },
+
   inputIcon: { marginRight: 8 },
+
   input: {
     flex: 1,
     fontSize: 16,
     fontWeight: "600",
-    color: colors.neutral,
-    paddingVertical: 14,
+    color: theme.text,
+    paddingVertical: 12,
   },
+
   saveButton: {
     borderRadius: 20,
     marginTop: 8,
     overflow: "hidden",
   },
+
   buttonGradient: {
     padding: 16,
     alignItems: "center",
   },
+
   saveButtonText: {
-    color: colors.white,
+    color: theme.textInverse,
     fontSize: 16,
     fontWeight: "700",
   },
+
   cancelButton: {
     alignItems: "center",
     paddingVertical: 14,
     marginTop: 12,
+    minHeight: layout.touchTarget.minimum,
   },
+
   cancelButtonText: {
-    color: "rgba(137,113,114,0.6)",
+    color: theme.textMuted,
     fontSize: 15,
     fontWeight: "600",
   },

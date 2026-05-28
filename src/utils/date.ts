@@ -1,16 +1,21 @@
+/**
+ * Date formatting utilities
+ * Compatible with predictions.ts timezone-safe patterns
+ */
+
+import { formatDateKey as formatKey, parseDateKey as parseKey } from "@/utils/predictions";
+
 export function toIsoDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return formatKey(date);
 }
 
 export function parseIsoDate(iso: string): Date {
-  return new Date(iso + "T12:00:00");
+  return parseKey(iso as any);
 }
 
 export function formatDisplayDate(iso: string): string {
-  return parseIsoDate(iso).toLocaleDateString(undefined, {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -18,7 +23,8 @@ export function formatDisplayDate(iso: string): string {
 }
 
 export function daysTogetherSince(startIso: string): number {
-  const start = parseIsoDate(startIso);
+  const [y, m, d] = startIso.split("-").map(Number);
+  const start = new Date(y, m - 1, d);
   start.setHours(0, 0, 0, 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);

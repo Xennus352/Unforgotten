@@ -1,49 +1,59 @@
-import { colors } from "@/constants/theme";
+import { theme } from "@/constants/theme";
+import { CalendarDay, DateKey } from "@/types/period";
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo } from "react";
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
-const { width } = Dimensions.get("window");
-
-const DAY_SIZE = Math.floor((width - 32) / 7) - 1;
-
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+import { useCallback, useMemo } from "react";
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface CalendarProps {
   currentDate: Date;
   onMonthChange: (direction: "prev" | "next") => void;
-  selectedDates: string[];
-  predictedDates?: string[];
-  onToggleDate?: (dateKey: string) => void;
+  selectedDates: DateKey[];
+  predictedDates: DateKey[];
+  onToggleDate?: (dateKey: DateKey) => void;
 }
+
+const { width: screenWidth } = Dimensions.get("window");
+const DAY_SIZE = Math.max(
+  32,
+  Math.min(48, Math.floor((screenWidth - 48) / 7) - 2),
+);
+
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function Calendar({
   currentDate,
   onMonthChange,
   selectedDates,
-  predictedDates = [],
+  predictedDates,
   onToggleDate,
 }: CalendarProps) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  const todayObj = new Date();
-  const todayKey = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, "0")}-${String(todayObj.getDate()).padStart(2, "0")}`;
+  const todayKey = useMemo(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}` as DateKey;
+  }, []);
 
   const daysInMonth = useMemo(
     () => new Date(year, month + 1, 0).getDate(),
@@ -54,202 +64,348 @@ export default function Calendar({
     [year, month],
   );
 
-  const daysGrid = useMemo(() => {
-    const items = [];
+  const calendarDays = useMemo((): CalendarDay[] => {
+    const days: CalendarDay[] = [];
 
+    // Add empty placeholder cells for days before month start
+    // These render as blank cells but maintain grid alignment
     for (let i = 0; i < firstDayIndex; i++) {
-      items.push(<View key={`empty-${i}`} style={styles.dayCellEmpty} />);
+      days.push({
+        dateKey: `placeholder-leading-${i}` as DateKey,
+        day: null,
+        isToday: false,
+        isCurrentMonth: false,
+        isSelected: false,
+        isPredicted: false,
+        isWeekend: false,
+      });
     }
 
-    
+    // Add days of current month
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dateKey =
+        `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` as DateKey;
+      const dayDate = new Date(year, month, day);
+      const dayOfWeek = dayDate.getDay();
 
-      const isToday = dateKey === todayKey;
-      const isPassedPeriod = selectedDates.includes(dateKey);
-      const isPredictedPeriod = predictedDates.includes(dateKey);
-
-      const textStyle = [
-        styles.dayText,
-        isPassedPeriod && styles.activePeriodText,
-        isPredictedPeriod && styles.predictedPeriodText,
-      ];
-
-      items.push(
-        <TouchableOpacity
-          key={`day-${day}`}
-          style={styles.dayCell}
-          onPress={() => onToggleDate?.(dateKey)}
-          activeOpacity={0.7}
-        >
-          {isPassedPeriod && (
-            <View style={[styles.statusCapsule, styles.activePeriodCapsule]} />
-          )}
-
-          {isPredictedPeriod && !isPassedPeriod && (
-            <View
-              style={[styles.statusCapsule, styles.predictedPeriodCapsule]}
-            />
-          )}
-
-          {isToday && <View style={styles.todayOutlineCell} />}
-
-          <Text style={textStyle}>{day}</Text>
-
-          {isPassedPeriod && (
-            <Ionicons
-              name="heart"
-              size={11}
-              color={colors.white}
-              style={styles.heartIndicator}
-            />
-          )}
-          {isPredictedPeriod && !isPassedPeriod && (
-            <Ionicons
-              name="heart-outline"
-              size={11}
-              color={colors.primary}
-              style={styles.heartIndicator}
-            />
-          )}
-        </TouchableOpacity>
-      );
+      days.push({
+        dateKey,
+        day,
+        isToday: dateKey === todayKey,
+        isCurrentMonth: true,
+        isSelected: selectedDates.includes(dateKey),
+        isPredicted: predictedDates.includes(dateKey),
+        isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+      });
     }
 
-    return items;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Fill remaining cells to complete 6 rows (42 cells total)
+    // This ensures proper grid alignment for all months
+    const totalCells = days.length;
+    const remainingCells = 42 - totalCells;
+    for (let i = 0; i < remainingCells; i++) {
+      days.push({
+        dateKey: `placeholder-trailing-${i}` as DateKey,
+        day: null,
+        isToday: false,
+        isCurrentMonth: false,
+        isSelected: false,
+        isPredicted: false,
+        isWeekend: false,
+      });
+    }
+
+    return days;
   }, [
     year,
     month,
     daysInMonth,
     firstDayIndex,
+    todayKey,
     selectedDates,
     predictedDates,
-    todayKey,
   ]);
+
+  const handleDayPress = useCallback(
+    (dateKey: DateKey) => {
+      onToggleDate?.(dateKey);
+    },
+    [onToggleDate],
+  );
+
+  const renderDay = useCallback(
+    (day: CalendarDay) => {
+      const accessibilityLabel = day.isCurrentMonth
+        ? `${day.day}${getOrdinalSuffix(day.day || 0)} ${MONTH_NAMES[month]}, ${year}`
+        : day.day === null
+          ? "Empty day"
+          : `Other month day ${day.day}`;
+
+      const dayStyle = [
+        styles.dayCell,
+        day.isCurrentMonth && styles.currentMonthDay,
+      ];
+
+      // Don't show today indicator if selected or predicted
+      const showTodayIndicator =
+        day.isToday && !day.isSelected && !day.isPredicted;
+
+      return (
+        <TouchableOpacity
+          key={day.dateKey}
+          style={dayStyle}
+          onPress={() =>
+            day.isCurrentMonth && handleDayPress(day.dateKey as DateKey)
+          }
+          disabled={!day.isCurrentMonth}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={
+            day.isCurrentMonth ? "Tap to log period day" : undefined
+          }
+          accessibilityState={{ selected: day.isSelected }}
+        >
+          {day.isCurrentMonth && (
+            <View style={styles.dayWrapper}>
+              {/* BACKGROUND */}
+              {day.isToday && !day.isSelected && !day.isPredicted && (
+                <View style={styles.todayCell} />
+              )}
+
+              {day.isPredicted && !day.isSelected && (
+                <View style={styles.predictedIndicator} />
+              )}
+
+              {day.isSelected && <View style={styles.selectedIndicator} />}
+
+              {/* NUMBER (ONLY ONCE) */}
+              {day.day !== null && (
+                <Text
+                  style={[
+                    styles.dayText,
+                    day.isToday &&
+                      !day.isSelected &&
+                      !day.isPredicted &&
+                      styles.todayText,
+                    day.isSelected && styles.selectedDayText,
+                    day.isPredicted &&
+                      !day.isSelected &&
+                      styles.predictedDayText,
+                  ]}
+                >
+                  {day.day}
+                </Text>
+              )}
+
+              {/* ICON */}
+              {day.isSelected && (
+                <View>
+                  <Ionicons name="heart" size={10} color={theme.textInverse} />
+                </View>
+              )}
+            </View>
+          )}
+        </TouchableOpacity>
+      );
+    },
+    [month, year, handleDayPress],
+  );
 
   return (
     <View style={styles.calendarCard}>
       <View style={styles.calendarHeader}>
-        <Text style={styles.arrowButton} onPress={() => onMonthChange("prev")}>
-          <Ionicons name="chevron-back" size={18} color={colors.neutral} />
-        </Text>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => onMonthChange("prev")}
+          accessibilityRole="button"
+          accessibilityLabel="Previous month"
+          accessibilityHint="Navigate to previous month"
+        >
+          <Ionicons name="chevron-back" size={20} color={theme.textSecondary} />
+        </TouchableOpacity>
 
         <Text style={styles.monthLabel}>
-          {monthNames[month]} {year}
+          {MONTH_NAMES[month]} {year}
         </Text>
 
-        <Text style={styles.arrowButton} onPress={() => onMonthChange("next")}>
-          <Ionicons name="chevron-forward" size={18} color={colors.neutral} />
-        </Text>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => onMonthChange("next")}
+          accessibilityRole="button"
+          accessibilityLabel="Next month"
+          accessibilityHint="Navigate to next month"
+        >
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={theme.textSecondary}
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.weekDaysRow}>
         {WEEKDAYS.map((day, idx) => (
-          <Text key={`weekday-${idx}`} style={styles.weekDayLabel}>
+          <Text
+            key={`weekday-${idx}`}
+            style={[
+              styles.weekDayLabel,
+              idx === 0 || idx === 6 ? styles.weekendLabel : null,
+            ]}
+            accessibilityLabel={day}
+          >
             {day}
           </Text>
         ))}
       </View>
 
-      <View style={styles.daysMatrixGrid}>{daysGrid}</View>
+      <View style={styles.daysMatrix}>{calendarDays.map(renderDay)}</View>
     </View>
   );
 }
 
+function getOrdinalSuffix(day: number): string {
+  if (day > 3 && day < 21) return "th";
+  switch (day % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
 const styles = StyleSheet.create({
   calendarCard: {
-    backgroundColor: colors.white,
+    backgroundColor: theme.surface,
     borderRadius: 24,
     padding: 16,
     width: "100%",
   },
+
   calendarHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 16,
   },
-  arrowButton: {
-    padding: 8,
-    backgroundColor: colors.creamBg,
-    borderRadius: 50,
-    textAlign: "center",
-  },
-  monthLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.neutral,
-  },
-  weekDaysRow: {
-    flexDirection: "row",
-    marginBottom: 10,
-    width: "100%",
-  },
-  weekDayLabel: {
-    width: DAY_SIZE,
-    textAlign: "center",
-    fontSize: 12,
-    fontWeight: "700",
-    color: "rgba(137,113,114,0.45)",
-  },
-  daysMatrixGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    width: DAY_SIZE * 7,
-    alignSelf: "center",
-  },
-  dayCell: {
+  dayWrapper: {
     width: DAY_SIZE,
     height: DAY_SIZE,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
-    marginVertical: 2,
   },
-  dayCellEmpty: {
+
+  navButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    backgroundColor: theme.cardSecondary,
+  },
+
+  monthLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: theme.text,
+    letterSpacing: 0.2,
+  },
+
+  weekDaysRow: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+
+  weekDayLabel: {
+    width: DAY_SIZE,
+    textAlign: "center",
+    fontSize: 11,
+    fontWeight: "600",
+    color: theme.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+
+  weekendLabel: {
+    color: theme.dangerSoft,
+  },
+
+  daysMatrix: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+
+  dayCell: {
     width: DAY_SIZE,
     height: DAY_SIZE,
-    marginVertical: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 1.5,
   },
-  statusCapsule: {
+
+  currentMonthDay: {
+    opacity: 1,
+  },
+
+  todayCell: {
     position: "absolute",
-    width: DAY_SIZE * 0.85,
-    height: DAY_SIZE * 0.85,
-    borderRadius: (DAY_SIZE * 0.85) / 2,
+    width: DAY_SIZE * 0.78,
+    height: DAY_SIZE * 0.78,
+    borderRadius: DAY_SIZE * 0.39,
+    borderWidth: 1.5,
+    borderColor: theme.textSecondary,
+    alignItems: "center",
+    justifyContent: "center",
   },
+
+  selectedIndicator: {
+    position: "absolute",
+    width: DAY_SIZE * 0.82,
+    height: DAY_SIZE * 0.82,
+    borderRadius: DAY_SIZE * 0.41,
+    backgroundColor: theme.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  predictedIndicator: {
+    position: "absolute",
+    width: DAY_SIZE * 0.7,
+    height: DAY_SIZE * 0.7,
+    borderRadius: DAY_SIZE * 0.35,
+    backgroundColor: theme.primarySoft,
+    opacity: 0.4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   dayText: {
     fontSize: 14,
+    fontWeight: "500",
+    color: theme.text,
+  },
+
+  todayText: {
+    color: theme.text,
+    fontWeight: "700",
+  },
+
+  selectedDayText: {
+    color: theme.textInverse,
+    fontWeight: "700",
+  },
+
+  predictedDayText: {
+    color: theme.primary,
     fontWeight: "600",
-    color: colors.neutral,
   },
-  activePeriodCapsule: {
-    backgroundColor: colors.primary,
-  },
-  activePeriodText: {
-    color: colors.white,
-    fontWeight: "700",
-  },
-  predictedPeriodCapsule: {
-    backgroundColor: `${colors.primary}25`,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderStyle: "dashed",
-  },
-  predictedPeriodText: {
-    color: colors.primary,
-    fontWeight: "700",
-  },
-  todayOutlineCell: {
-    position: "absolute",
-    width: DAY_SIZE * 0.85,
-    height: DAY_SIZE * 0.85,
-    borderRadius: (DAY_SIZE * 0.85) / 2,
-    borderWidth: 1.5,
-    borderColor: colors.neutral,
-  },
-  heartIndicator: {
-    position: "absolute",
-    bottom: 1,
+
+  otherMonthText: {
+    color: theme.textMuted,
   },
 });
