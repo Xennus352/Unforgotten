@@ -2,11 +2,11 @@ import { scheduleCustomCareNotification } from "@/app/(tabs)/index";
 import { DateKey } from "@/types/period";
 
 interface TrackingData {
-  selectedDates: Record<DateKey, boolean>;
-  predictedDates: Record<DateKey, boolean>;
+  selectedDates: DateKey[]; // Array of strings
+  predictedDates: DateKey[]; // Array of strings
   cycleLength: number;
   periodLength: number;
-  anniversaryDate?: string; // Optional Format: "YYYY-MM-DD" or just "MM-DD"
+  anniversaryDate?: string;
 }
 
 /**
@@ -28,15 +28,18 @@ export async function evaluateAndScheduleDailyNotification(data: TrackingData) {
     }
   }
 
-  // 2. Target Condition: In Period Check
-  // Active if today matches directly or sits inside the logged/predicted active window
-  if (data.selectedDates[todayStr] || data.predictedDates[todayStr]) {
+  // 2. Target Condition: Every Day In Period Check (Logged OR Predicted)
+  // FIX: Using .includes(todayStr) solves the index/any error completely
+  if (
+    data.selectedDates.includes(todayStr) ||
+    data.predictedDates.includes(todayStr)
+  ) {
     await scheduleCustomCareNotification("in_period");
     return "in_period";
   }
 
-  // 3. Target Condition: Near Period Check (2-3 days out)
-  const isNear = checkIfPeriodIsApproaching(data.predictedDates, 3);
+  // 3. Target Condition: Near Period Check (Exactly 2 days out)
+  const isNear = checkIfPeriodIsApproaching(data.predictedDates, 2);
   if (isNear) {
     await scheduleCustomCareNotification("near_period");
     return "near_period";
@@ -51,7 +54,7 @@ export async function evaluateAndScheduleDailyNotification(data: TrackingData) {
  * Utility: Checks if a predicted period date exists within the next X days
  */
 function checkIfPeriodIsApproaching(
-  predictedDates: Record<DateKey, boolean>,
+  predictedDates: DateKey[],
   daysAhead: number,
 ): boolean {
   const today = new Date();
@@ -61,7 +64,8 @@ function checkIfPeriodIsApproaching(
     futureDate.setDate(today.getDate() + i);
     const futureKey = formatDateToKey(futureDate);
 
-    if (predictedDates[futureKey]) {
+    // FIX: Changed from bracket index lookups to .includes()
+    if (predictedDates.includes(futureKey)) {
       return true;
     }
   }

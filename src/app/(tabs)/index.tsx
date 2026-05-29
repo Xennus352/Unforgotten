@@ -4,7 +4,7 @@ import { layout, theme } from "@/constants/theme";
 import { usePeriodData } from "@/hooks/usePeriodData";
 import { DateKey } from "@/types/period";
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Button,
@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { evaluateAndScheduleDailyNotification } from "@/utils/notificationScheduler";
 
 import { CareCategory, NotificationPayload } from "@/types/message";
 import { generateCareMessage } from "@/utils/messageEngine";
@@ -24,7 +25,6 @@ import * as Notifications from "expo-notifications";
 export async function scheduleCustomCareNotification(
   currentPhase: CareCategory,
 ) {
-  // Compile completely unique message permutation
   const messageDetails = generateCareMessage(currentPhase);
 
   const payload: NotificationPayload = {
@@ -33,25 +33,31 @@ export async function scheduleCustomCareNotification(
     messageId: messageDetails.id,
   };
 
-  //  Queue Alert to fire in exactly 1 minute
-  const id = await Notifications.scheduleNotificationAsync({
+  // Clear previous scheduled notifications so they don't pile up uncontrollably
+  await Notifications.cancelAllScheduledNotificationsAsync();
+
+  // For Production: Trigger everyday at 9:00 AM local time
+  await Notifications.scheduleNotificationAsync({
     content: {
       title: "💝 Unforgotten",
-      body: messageDetails.text, // Combined Burmese Text variation
+      body: messageDetails.text,
       sound: true,
       data: payload,
     },
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 60, 
-      repeats: false,
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: 10,
+      minute: 0,
     },
+    // Test noti in 10 seconds
+    // trigger: {
+    //   type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+    //   seconds: 10,
+    //   repeats: false,
+    // },
   });
 
-  console.log(
-    `📨 Test [${currentPhase}] alert queued for 1 minute from now. ID:`,
-    id,
-  );
+  console.log(`📨 Live [${currentPhase}] alert scheduled daily at 10:00 AM.`);
 }
 
 export default function Index() {
@@ -70,26 +76,28 @@ export default function Index() {
     predictedDates,
   } = usePeriodData();
 
-  /**
-   * Temporary Test Engine: Randomly selects a category to test text variations
-   */
-  const determineCurrentCategory = useCallback((): CareCategory => {
-    const testCategories: CareCategory[] = [
-      "sweet",
-      "near_period",
-      "in_period",
-      "anniversary",
-    ];
-    const randomIndex = Math.floor(Math.random() * testCategories.length);
-    return testCategories[randomIndex];
-  }, []);
+  // Automatically recalculate notifications when data updates
+  useEffect(() => {
+    if (initialized) {
+      evaluateAndScheduleDailyNotification({
+        selectedDates,
+        predictedDates,
+        cycleLength,
+        periodLength,
+      });
+    }
+  }, [selectedDates, predictedDates, cycleLength, periodLength, initialized]);
 
+  // Manual trigger button logic updated for testing live state
   const triggerNotificationTest = useCallback(async () => {
-    const activeCategory = determineCurrentCategory();
-    await scheduleCustomCareNotification(activeCategory);
-  }, [determineCurrentCategory]);
-
-  ///TODO:Test only
+    const result = await evaluateAndScheduleDailyNotification({
+      selectedDates,
+      predictedDates,
+      cycleLength,
+      periodLength,
+    });
+    alert(`Notification Evaluation Simulated! Today's bucket: ${result}`);
+  }, [selectedDates, predictedDates, cycleLength, periodLength]);
 
   const handleMonthChange = useCallback((direction: "prev" | "next") => {
     setCurrentDate((prev) => {

@@ -28,8 +28,8 @@ interface TabButtonProps {
   onPress: (e: any) => void;
 }
 
-const ACTIVE_PINK = "#E91E63";
-const INACTIVE_MUTE = "rgba(90, 75, 80, 0.6)";
+const ACTIVE_PINK = "#e25a5a";
+const INACTIVE_MUTE = "#fff";
 
 const GLASS_SPRING = {
   damping: 18,
