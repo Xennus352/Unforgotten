@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Unforgotten",
-    "slug": "Unforgotten",
+    "slug": "unforgotten",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.anonymous.Unforgotten"
+      "bundleIdentifier": "com.kazue.Unforgotten"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Unforgotten"
+      "package": "com.kazue.Unforgotten"
     },
     "web": {
       "output": "static",
@@ -42,6 +42,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "57106ddf-a5c7-43b2-92bb-6c9ecf708c51"
+      }
+    },
+    "owner": "xennus"
   }
 }
