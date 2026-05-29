@@ -1,9 +1,10 @@
-import { colors } from "@/constants/theme";
 import { DatePickerField } from "@/components/milestone/DatePickerField";
+import { colors } from "@/constants/theme";
 import { toIsoDate } from "@/utils/date";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -15,13 +16,17 @@ type Props = {
 };
 
 export function SetAnniversaryCard({ onSave }: Props) {
-  const [date, setDate] = useState(() => new Date());
+  const [date, setDate] = useState(new Date());
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await onSave(toIsoDate(date));
+      Alert.alert("Success", "Anniversary date saved successfully! ❤️");
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong while saving.");
+      console.error(error);
     } finally {
       setSaving(false);
     }

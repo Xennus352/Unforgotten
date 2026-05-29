@@ -3,6 +3,7 @@ import { AnniversaryHero } from "@/components/milestone/AnniversaryHero";
 import { MilestoneCalendarPanel } from "@/components/milestone/MilestoneCalendarPanel";
 import { MilestoneTimeline } from "@/components/milestone/MilestoneTimeline";
 import { SetAnniversaryCard } from "@/components/milestone/SetAnniversaryCard";
+import { UpdateAnniversaryModal } from "@/components/milestone/UpdateAnniversaryModal";
 import { colors } from "@/constants/theme";
 import { useMilestones } from "@/hooks/useMilestones";
 import { deleteMilestone, updateMilestone } from "@/lib/db/milestones";
@@ -20,17 +21,28 @@ import {
 
 export default function MilestoneScreen() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(
+    null,
+  );
 
- 
-  const { milestones, relationshipStart, loading, reload, addMilestone } = useMilestones();
+  //Declare modal trigger flag state
+  const [anniversaryModalVisible, setAnniversaryModalVisible] = useState(false);
+
+  const {
+    milestones,
+    relationshipStart,
+    loading,
+    reload,
+    addMilestone,
+    setAnniversary,
+  } = useMilestones();
 
   const days = relationshipStart ? daysTogetherSince(relationshipStart) : 0;
 
   const handleDelete = async (id: string) => {
     try {
       await deleteMilestone(id);
-      await reload(); 
+      await reload();
     } catch (error) {
       console.error("Failed to delete milestone row:", error);
     }
@@ -38,20 +50,25 @@ export default function MilestoneScreen() {
 
   const handleEdit = (milestone: Milestone) => {
     setEditingMilestone(milestone);
-    setModalVisible(true); 
+    setModalVisible(true);
   };
 
-  const handleSaveOrUpdate = async (fields: { title: string; note?: string; emoji: string; date: string }) => {
+  const handleSaveOrUpdate = async (fields: {
+    title: string;
+    note?: string;
+    emoji: string;
+    date: string;
+  }) => {
     try {
       if (editingMilestone) {
         await updateMilestone(editingMilestone.id, fields);
       } else {
         await addMilestone(fields);
       }
-      
+
       setModalVisible(false);
       setEditingMilestone(null);
-      
+
       await reload();
     } catch (error) {
       console.error("Error committing milestone modification task:", error);
@@ -71,17 +88,21 @@ export default function MilestoneScreen() {
           showsVerticalScrollIndicator={false}
           bounces={true}
         >
-          <MilestoneCalendarPanel milestones={milestones} />
+          <MilestoneCalendarPanel
+            milestones={milestones}
+            anniversaryDate={relationshipStart}
+          />
 
           <View style={styles.contentBody}>
             {!relationshipStart ? (
-              <SetAnniversaryCard onSave={async (d) => {}} />
+              <SetAnniversaryCard onSave={setAnniversary} />
             ) : (
               <View style={styles.heroGrid}>
                 <View style={styles.heroMainColumn}>
                   <AnniversaryHero
                     daysTogether={days}
                     sinceLabel={formatDisplayDate(relationshipStart)}
+                    onBadgePress={() => setAnniversaryModalVisible(true)}
                   />
                 </View>
 
@@ -92,7 +113,7 @@ export default function MilestoneScreen() {
                       pressed && styles.actionCardPressed,
                     ]}
                     onPress={() => {
-                      setEditingMilestone(null); 
+                      setEditingMilestone(null);
                       setModalVisible(true);
                     }}
                   >
@@ -113,8 +134,8 @@ export default function MilestoneScreen() {
             )}
 
             <View style={styles.timelineContainer}>
-              <MilestoneTimeline 
-                items={milestones} 
+              <MilestoneTimeline
+                items={milestones}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />
@@ -130,7 +151,13 @@ export default function MilestoneScreen() {
           setEditingMilestone(null);
         }}
         onSave={handleSaveOrUpdate}
-        initialData={editingMilestone ?? undefined} 
+        initialData={editingMilestone ?? undefined}
+      />
+      <UpdateAnniversaryModal
+        visible={anniversaryModalVisible}
+        onClose={() => setAnniversaryModalVisible(false)}
+        currentDateString={relationshipStart}
+        onSave={setAnniversary}
       />
     </View>
   );

@@ -39,6 +39,7 @@ export const STORAGE_KEYS = {
   CYCLE_LENGTH: "period_cycle_length",
   PERIOD_LENGTH: "period_period_length",
   IS_NEW_USER: "period_is_new_user",
+  ANNIVERSARY_DATE: "period_anniversary_date",
   STORAGE_VERSION: "period_storage_version",
 } as const;
 

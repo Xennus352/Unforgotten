@@ -5,6 +5,7 @@
 
 import { storage, STORAGE_KEYS } from "@/lib/db/storage";
 import { generatePredictions } from "@/utils/predictions";
+import { createDefaultAnniversaryDate } from "@/utils/anniversary";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateKey } from "@/types/period";
 
@@ -13,6 +14,7 @@ export function usePeriodData() {
   const [cycleLength, setCycleLength] = useState<number>(28);
   const [periodLength, setPeriodLength] = useState<number>(5);
   const [isNewUser, setIsNewUser] = useState<boolean>(true);
+  const [anniversaryDate, setAnniversaryDate] = useState<string | undefined>(undefined);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -24,10 +26,23 @@ export function usePeriodData() {
         isNewUser,
       } = await storage.getPeriodData();
 
+      // Load anniversary date from storage
+      const storedAnniversary = await storage.getString(STORAGE_KEYS.ANNIVERSARY_DATE);
+
       setSelectedDates(selectedDates);
       setCycleLength(cycleLength);
       setPeriodLength(periodLength);
       setIsNewUser(isNewUser);
+
+      // If anniversary date is missing, generate and save a default one
+      if (!storedAnniversary) {
+        const defaultDate = createDefaultAnniversaryDate();
+        await storage.setString(STORAGE_KEYS.ANNIVERSARY_DATE, defaultDate);
+        setAnniversaryDate(defaultDate);
+      } else {
+        setAnniversaryDate(storedAnniversary);
+      }
+
       setInitialized(true);
     };
 
@@ -76,5 +91,6 @@ export function usePeriodData() {
     completeOnboarding,
     initialized,
     predictedDates,
+    anniversaryDate,
   };
 }

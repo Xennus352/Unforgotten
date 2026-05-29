@@ -2,47 +2,75 @@ import { colors } from "@/constants/theme";
 import type { Milestone } from "@/types/milestone";
 import { toIsoDate } from "@/utils/date";
 import { milestoneMarkedDates } from "@/utils/milestoneEvents";
-import { Ionicons } from "@expo/vector-icons"; // Added Ionicons Import
+import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   milestones: Milestone[];
+  anniversaryDate?: string | null;
 };
 
-
 const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function MilestoneCalendarPanel({ milestones }: Props) {
+export function MilestoneCalendarPanel({ milestones, anniversaryDate }: Props) {
   const insets = useSafeAreaInsets();
   const today = toIsoDate(new Date());
   const [selectedDate, setSelectedDate] = useState(today);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Dynamic real-time date compilation string
+  // Extract just the "MM-DD" from the anniversary string (e.g., "05-30")
+  const anniversaryMatchString = useMemo(() => {
+    if (!anniversaryDate) return null;
+    const parts = anniversaryDate.split("-");
+    if (parts.length < 3) return null;
+    return `${parts[1]}-${parts[2]}`; // Returns "05-30"
+  }, [anniversaryDate]);
+
   const dynamicTodayString = useMemo(() => {
     const d = new Date();
     return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
   }, []);
 
   const milestoneMap = useMemo(() => {
-    const marks = milestoneMarkedDates(milestones);
-    return marks;
+    return milestoneMarkedDates(milestones);
   }, [milestones]);
 
   const dateStrip = useMemo(() => {
     const list = [];
     const baseDate = new Date();
+
     for (let i = -14; i <= 14; i++) {
-      const d = new Date(baseDate);
+      const d = new Date(
+        baseDate.getFullYear(),
+        baseDate.getMonth(),
+        baseDate.getDate(),
+      );
       d.setDate(baseDate.getDate() + i);
+
       const iso = toIsoDate(d);
+
+      // Format current strip item to "MM-DD" for recurring validation
+      const currentMonth = String(d.getMonth() + 1).padStart(2, "0");
+      const currentDay = String(d.getDate()).padStart(2, "0");
+      const currentMdString = `${currentMonth}-${currentDay}`;
+
       list.push({
         isoString: iso,
         dayNum: d.getDate(),
@@ -50,10 +78,13 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
         monthIndex: d.getMonth(),
         year: d.getFullYear(),
         hasMilestone: !!milestoneMap[iso]?.marked,
+        // Match by month and day so it marks the anniversary day recurringly
+        isAnniversary: anniversaryMatchString === currentMdString,
       });
     }
+
     return list;
-  }, [milestoneMap]);
+  }, [milestoneMap, anniversaryMatchString]);
 
   const currentFocus = useMemo(() => {
     const d = new Date(selectedDate);
@@ -72,21 +103,16 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
   return (
     <View style={[styles.rootContainer, { paddingTop: insets.top + 12 }]}>
       <View style={styles.scrollerSectionView}>
-        <Text style={styles.scrollerSectionTitle}>
-          Select Anchor Date
-        </Text>
-        
-        
+        <Text style={styles.scrollerSectionTitle}>Select Anchor Date</Text>
+
         <View style={styles.todayDateBadgeRow}>
-          <Ionicons 
-            name="today-outline" 
-            size={13} 
-            color={colors.neutral} 
+          <Ionicons
+            name="today-outline"
+            size={13}
+            color={colors.neutral}
             style={styles.todayIconShift}
           />
-          <Text style={styles.todayDateBadgeText}>
-            {dynamicTodayString}
-          </Text>
+          <Text style={styles.todayDateBadgeText}>{dynamicTodayString}</Text>
         </View>
       </View>
 
@@ -158,6 +184,16 @@ export function MilestoneCalendarPanel({ milestones }: Props) {
                         ]}
                       />
                     )}
+                    {item.isAnniversary && (
+                      <Text
+                        style={[
+                          styles.anniversaryHeart,
+                          isSelected && styles.anniversaryHeartSelected,
+                        ]}
+                      >
+                        ♥
+                      </Text>
+                    )}
                   </View>
                 </Pressable>
               );
@@ -223,7 +259,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   activeEventBadge: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.primary, // Fixed text visibility issue here
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -260,7 +296,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   todayIconShift: {
-    marginTop: -2, 
+    marginTop: -2,
   },
   todayDateBadgeText: {
     fontSize: 14,
@@ -332,5 +368,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     width: 6,
     height: 6,
+  },
+  anniversaryHeart: {
+    fontSize: 8,
+    color: colors.primary,
+    position: "absolute",
+    top: -2,
+  },
+  anniversaryHeartSelected: {
+    color: colors.white,
   },
 });

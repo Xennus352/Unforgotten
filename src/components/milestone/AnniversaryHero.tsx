@@ -1,13 +1,18 @@
 import { colors } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   daysTogether: number;
   sinceLabel: string;
+  onBadgePress?: () => void;
 };
 
-export function AnniversaryHero({ daysTogether, sinceLabel }: Props) {
+export function AnniversaryHero({
+  daysTogether,
+  sinceLabel,
+  onBadgePress,
+}: Props) {
   return (
     <LinearGradient
       colors={["#FFFFFF", colors.creamBg]}
@@ -20,9 +25,15 @@ export function AnniversaryHero({ daysTogether, sinceLabel }: Props) {
       <Text style={styles.unit}>days of love</Text>
       <View style={styles.divider} />
       <Text style={styles.since}>Since {sinceLabel}</Text>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>Our Space</Text>
-      </View>
+      <Pressable
+        style={({ pressed }) => [
+          styles.badge,
+          pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+        ]}
+        onPress={onBadgePress}
+      >
+        <Text style={styles.badgeText}>Our Space ›</Text>
+      </Pressable>
     </LinearGradient>
   );
 }
@@ -47,7 +58,7 @@ const styles = StyleSheet.create({
     color: colors.neutral,
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    padding:1,
+    padding: 1,
   },
   days: {
     fontSize: 60,
@@ -75,19 +86,32 @@ const styles = StyleSheet.create({
     color: "#4A3E3F",
   },
   badge: {
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 194, 209, 0.25)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 194, 209, 0.4)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+
+    marginTop: 16, 
+
+    borderRadius: 999, 
+
+    backgroundColor: "#FF7EB3",
+
+    borderWidth: 0,  
+
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
+
   badgeText: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: "700",
-    color: colors.neutral,
-    letterSpacing: 0.5,
-    paddingHorizontal:0.5,
+    color: "#fff",
+    letterSpacing: 0.3,
   },
 });

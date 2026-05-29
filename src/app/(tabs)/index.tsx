@@ -1,13 +1,13 @@
 import Calendar from "@/components/periodSpace/Calendar";
 import OnboardingModal from "@/components/periodSpace/OnboardingModal";
 import { layout, theme } from "@/constants/theme";
+import { useNotificationScheduler } from "@/hooks/useNotificationScheduler";
 import { usePeriodData } from "@/hooks/usePeriodData";
 import { DateKey } from "@/types/period";
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Button,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,50 +15,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { evaluateAndScheduleDailyNotification } from "@/utils/notificationScheduler";
-
-import { CareCategory, NotificationPayload } from "@/types/message";
-import { generateCareMessage } from "@/utils/messageEngine";
-import * as Notifications from "expo-notifications";
-
-// Dynamic Notification Service Linked to Cycle Context
-export async function scheduleCustomCareNotification(
-  currentPhase: CareCategory,
-) {
-  const messageDetails = generateCareMessage(currentPhase);
-
-  const payload: NotificationPayload = {
-    category: currentPhase,
-    appVersion: "1.0.0",
-    messageId: messageDetails.id,
-  };
-
-  // Clear previous scheduled notifications so they don't pile up uncontrollably
-  await Notifications.cancelAllScheduledNotificationsAsync();
-
-  // For Production: Trigger everyday at 9:00 AM local time
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "💝 Unforgotten",
-      body: messageDetails.text,
-      sound: true,
-      data: payload,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: 10,
-      minute: 0,
-    },
-    // Test noti in 10 seconds
-    // trigger: {
-    //   type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-    //   seconds: 10,
-    //   repeats: false,
-    // },
-  });
-
-  console.log(`📨 Live [${currentPhase}] alert scheduled daily at 10:00 AM.`);
-}
 
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -74,30 +30,18 @@ export default function Index() {
     completeOnboarding,
     initialized,
     predictedDates,
+    anniversaryDate,
   } = usePeriodData();
 
-  // Automatically recalculate notifications when data updates
-  useEffect(() => {
-    if (initialized) {
-      evaluateAndScheduleDailyNotification({
-        selectedDates,
-        predictedDates,
-        cycleLength,
-        periodLength,
-      });
-    }
-  }, [selectedDates, predictedDates, cycleLength, periodLength, initialized]);
-
-  // Manual trigger button logic updated for testing live state
-  const triggerNotificationTest = useCallback(async () => {
-    const result = await evaluateAndScheduleDailyNotification({
-      selectedDates,
-      predictedDates,
-      cycleLength,
-      periodLength,
-    });
-    alert(`Notification Evaluation Simulated! Today's bucket: ${result}`);
-  }, [selectedDates, predictedDates, cycleLength, periodLength]);
+  // Use the notification scheduler hook for automatic scheduling
+  useNotificationScheduler({
+    initialized,
+    selectedDates,
+    predictedDates,
+    cycleLength,
+    periodLength,
+    anniversaryDate,
+  });
 
   const handleMonthChange = useCallback((direction: "prev" | "next") => {
     setCurrentDate((prev) => {
@@ -148,7 +92,7 @@ export default function Index() {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.greetingText}>Hello there,</Text>
-            <Text style={styles.mainTitle}>Your Cycle Insights</Text>
+            <Text style={styles.mainTitle}>Bae&apos;s Cycle Insights</Text>
           </View>
 
           {!isNewUser && (
@@ -227,14 +171,6 @@ export default function Index() {
           predictedDates={predictedDates}
           onToggleDate={handleToggleDate}
         />
-
-        {/* FIXED: Swapped out dead reference for triggerNotificationTest */}
-        <View style={{ flex: 1, justifyContent: "center", marginTop: 20 }}>
-          <Button
-            title="Send Notification (1 Min)"
-            onPress={triggerNotificationTest}
-          />
-        </View>
       </ScrollView>
 
       <OnboardingModal

@@ -60,22 +60,26 @@ export async function fetchMilestones(): Promise<Milestone[]> {
   return rows.map(rowToMilestone);
 }
 
+// 1. FIX: Array wrapper for parameters
 export async function fetchRelationshipStart(): Promise<string | null> {
   const db = await getDatabase();
   const row = await db.getFirstAsync<{ value: string }>(
     "SELECT value FROM app_settings WHERE key = ?",
-    RELATIONSHIP_START_KEY,
+    [RELATIONSHIP_START_KEY],
   );
-  return row?.value ?? null;
+  const result = row?.value ?? null;
+  console.log("[Anniversary Debug] fetchRelationshipStart:", result);
+  return result;
 }
 
+// 2. FIX: Array wrapper for parameters
 export async function saveRelationshipStart(isoDate: string): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
     "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)",
-    RELATIONSHIP_START_KEY,
-    isoDate,
+    [RELATIONSHIP_START_KEY, isoDate],
   );
+  console.log("[Anniversary Debug] saveRelationshipStart:", isoDate);
 }
 
 export type NewMilestone = {
@@ -85,6 +89,7 @@ export type NewMilestone = {
   note?: string;
 };
 
+// 3. FIX: Array wrapper for parameters
 export async function insertMilestone(input: NewMilestone): Promise<Milestone> {
   const db = await getDatabase();
   const milestone: Milestone = {
@@ -97,25 +102,28 @@ export async function insertMilestone(input: NewMilestone): Promise<Milestone> {
 
   await db.runAsync(
     "INSERT INTO milestones (id, title, date, emoji, note) VALUES (?, ?, ?, ?, ?)",
-    milestone.id,
-    milestone.title,
-    milestone.date,
-    milestone.emoji,
-    milestone.note ?? null,
+    [
+      milestone.id,
+      milestone.title,
+      milestone.date,
+      milestone.emoji,
+      milestone.note ?? null,
+    ], // Wrapped in an array
   );
 
   return milestone;
 }
 
+// 4. FIX: Array wrapper for parameters
 export async function deleteMilestone(id: string): Promise<void> {
   const db = await getDatabase();
-  await db.runAsync("DELETE FROM milestones WHERE id = ?", id);
+  await db.runAsync("DELETE FROM milestones WHERE id = ?", [id]); // Wrapped in an array
 }
 
-
+// 5. FIX: Removed trailing spread operator (...args)
 export async function updateMilestone(
   id: string,
-  updates: Partial<NewMilestone>
+  updates: Partial<NewMilestone>,
 ): Promise<void> {
   const db = await getDatabase();
   const sets: string[] = [];
@@ -142,5 +150,7 @@ export async function updateMilestone(
 
   args.push(id);
   const query = `UPDATE milestones SET ${sets.join(", ")} WHERE id = ?`;
-  await db.runAsync(query, ...args);
+
+  // Passed directly as a single array, avoiding the spread operator error
+  await db.runAsync(query, args);
 }
